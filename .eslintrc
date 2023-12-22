@@ -11,7 +11,9 @@
   "plugins": ["import", "@typescript-eslint"],
   "rules": {
     "comma-dangle": 0,
-    "import/extensions": 0
+    "import/extensions": 0,
+    "@typescript-eslint/no-redeclare": 0,
+    "import/no-extraneous-dependencies": 0
   },
   "settings": {
     "import/parsers": {
