@@ -2,7 +2,7 @@
   "name": "weather-app-api",
   "version": "1.0.0",
   "description": " A basic express.js API with Typescript for the weather app code challenge",
-  "main": "src/index.ts",
+  "main": "dist/src/index.js",
   "scripts": {
     "start": "ts-node dist/src/index.js",
     "dev": "nodemon src/index.ts",
@@ -25,6 +25,7 @@
     "express": "^4.18.2",
     "helmet": "^7.1.0",
     "morgan": "^1.10.0",
+    "node-fetch": "^2.6.*",
     "undici": "^6.0.1"
   },
   "devDependencies": {
@@ -33,6 +34,7 @@
     "@types/jest": "^29.5.10",
     "@types/morgan": "^1.9.9",
     "@types/node": "^20.10.0",
+    "@types/node-fetch": "^2.6.9",
     "@types/supertest": "^2.0.16",
     "@typescript-eslint/eslint-plugin": "^6.13.1",
     "@typescript-eslint/parser": "^6.13.1",

@@ -1,12 +1,7 @@
-import { fetch, Agent } from "undici";
+import fetch from "node-fetch";
 
-export default async function fetchWithTimeout(url: string, timeout = 15) {
-  const response = await fetch(url, {
-    dispatcher: new Agent({
-      keepAliveTimeout: timeout,
-      keepAliveMaxTimeout: timeout,
-    }),
-  });
+export default async function fetchWithTimeout(url: string) {
+  const response = await fetch(url);
   const data = await response.json();
   return data;
 }

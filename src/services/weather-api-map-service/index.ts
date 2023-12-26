@@ -16,7 +16,7 @@ export async function fetchReverseGeocoding(lat: string, lon: string) {
 }
 
 export async function fetchOnecall(lat: string, lon: string) {
-  const url = `${baseUrl}/data/3.0/onecall?lat=${lat}&lon=${lon}&appid=${apiKey}`;
+  const url = `${baseUrl}/data/3.0/onecall?lat=${lat}&lon=${lon}&units=metric&lang=es&appid=${apiKey}`;
   const data = await fetchWithTimeout(url);
   return data;
 }
