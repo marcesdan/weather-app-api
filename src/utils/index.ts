@@ -1,1 +1,1 @@
-export { default as fetchWithTimeout } from "./fetchWithTimeout";
+export { default as safeFetch } from "./safeFetch";
