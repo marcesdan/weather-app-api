@@ -124,6 +124,10 @@ export type Nearby = {
   population: number;
 }[];
 const nearbyCache = ttlCache<Nearby>(24 * 60 * 60_000, 2000);
+const OVERPASS = [
+  "https://overpass-api.de/api/interpreter",
+  "https://overpass.kumi.systems/api/interpreter",
+];
 
 // Towns and cities within 60 km from OpenStreetMap (Overpass). Proxied and cached for a day per ~10 km: Overpass
 // rate-limits by IP and answers its 429s without CORS headers, which the browser reports as a CORS failure.
@@ -137,15 +141,21 @@ export async function fetchNearby(
   const q = `[out:json][timeout:15];node(around:60000,${lat.toFixed(
     3,
   )},${lon.toFixed(3)})[place~"^(city|town)$"][name];out 40;`;
-  const res = await fetch("https://overpass-api.de/api/interpreter", {
-    method: "POST",
-    body: new URLSearchParams({ data: q }),
-    headers: {
-      "User-Agent":
-        "weather-app-api (+https://github.com/marcesdan/weather-app-api)",
-    },
-  }).catch(() => null);
-  if (!res?.ok) return { ok: false, status: res?.status ?? 502 };
+  // Overpass is community-run and often saturated: try a mirror, never wait more than 8 s per server.
+  let res = null;
+  for (const url of OVERPASS) {
+    res = await fetch(url, {
+      method: "POST",
+      body: new URLSearchParams({ data: q }),
+      timeout: 8000,
+      headers: {
+        "User-Agent":
+          "weather-app-api (+https://github.com/marcesdan/weather-app-api)",
+      },
+    }).catch(() => null);
+    if (res?.ok) break;
+  }
+  if (!res?.ok) return { ok: false, status: res?.status ?? 504 };
   const { elements } = (await res.json()) as {
     elements: { lat: number; lon: number; tags: Record<string, string> }[];
   };
