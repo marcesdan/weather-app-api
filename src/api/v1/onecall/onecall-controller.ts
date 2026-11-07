@@ -1,9 +1,10 @@
 import { Request, Response } from "express";
+import { validCoords } from "../../../utils/validCoords";
 import { fetchOnecall } from "../../../services/weather-api-map-service";
 
 export const getCurrentWeather = async (req: Request, res: Response) => {
   const { lat, lon } = req.query;
-  if (!(lat && lon)) {
+  if (!validCoords(lat, lon)) {
     res.status(400).json({ error: "Geocords are required" });
     return;
   }

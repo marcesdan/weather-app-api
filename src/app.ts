@@ -13,12 +13,14 @@ app.use(morgan("dev"));
 app.use(helmet());
 app.use(cors());
 app.use(express.json());
-app.set("trust proxy", true);
+// Render puts exactly one proxy in front; `true` would trust a client-sent X-Forwarded-For.
+app.set("trust proxy", 1);
 app.get<{}, MessageResponse>("/", (req, res) => {
   res.json({
     message: "🦄🌈✨👋🌎🌍🌏✨🌈🦄",
   });
 });
+app.use("/api", middlewares.rateLimit);
 app.use("/api/v1", v1Routes);
 app.use("/api/v2", v2Routes);
 app.use(middlewares.notFound);

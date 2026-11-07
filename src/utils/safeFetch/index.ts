@@ -48,7 +48,8 @@ export default async function safeFetch(
       ok: false,
       status: response?.status ?? 500,
       problem: errorMessage,
-      error: response ? await response.json() : null,
+      // upstream errors are not always JSON (HTML 502 pages); never let parsing them throw
+      error: response ? await response.text().catch(() => null) : null,
     };
   }
 }
