@@ -83,3 +83,18 @@ describe("rate limit", () => {
     expect(last).toBe(429);
   });
 });
+
+describe("client ip behind Render's proxies", () => {
+  it("a spoofed X-Forwarded-For cannot dodge the rate limit", async () => {
+    let last = 0;
+    for (let i = 0; i <= RATE_LIMIT; i++) {
+      const fake = `203.0.113.${i % 250}`; // client-sent value, left-most
+      last = (
+        await request(app)
+          .get("/api/v1/")
+          .set("X-Forwarded-For", `${fake}, 198.51.100.7, 10.0.0.5`)
+      ).statusCode;
+    }
+    expect(last).toBe(429);
+  });
+});
