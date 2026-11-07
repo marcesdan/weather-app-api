@@ -31,24 +31,29 @@ export function errorHandler(
   });
 }
 
-// Fixed window per client IP: 120 requests a minute is plenty for the app (one call per place every 10 minutes).
+// Fixed window per client IP. 120 requests a minute is plenty for the app (one call per place every 10 minutes);
+// map tiles get their own, larger budget because one pan loads a few dozen.
 // shortcut: in-memory, per process; use a shared store if the API runs on more than one instance.
 const WINDOW_MS = 60_000;
 export const RATE_LIMIT = 120;
-const hits = new Map<string, number>();
-setInterval(() => hits.clear(), WINDOW_MS).unref();
+export const TILE_RATE_LIMIT = 900;
 
-export function rateLimit(
-  req: ExpressRequest,
-  res: ExpressResponse,
-  next: NextFunction,
-) {
-  const key = req.ip ?? "unknown";
-  const count = (hits.get(key) ?? 0) + 1;
-  hits.set(key, count);
-  if (count > RATE_LIMIT) {
-    res.status(429).json({ error: "Too many requests, try again in a minute" });
-    return;
-  }
-  next();
+function makeRateLimit(max: number) {
+  const hits = new Map<string, number>();
+  setInterval(() => hits.clear(), WINDOW_MS).unref();
+  return (req: ExpressRequest, res: ExpressResponse, next: NextFunction) => {
+    const key = req.ip ?? "unknown";
+    const count = (hits.get(key) ?? 0) + 1;
+    hits.set(key, count);
+    if (count > max) {
+      res
+        .status(429)
+        .json({ error: "Too many requests, try again in a minute" });
+      return;
+    }
+    next();
+  };
 }
+
+export const rateLimit = makeRateLimit(RATE_LIMIT);
+export const tileRateLimit = makeRateLimit(TILE_RATE_LIMIT);

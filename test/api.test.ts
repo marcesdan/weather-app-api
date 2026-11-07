@@ -23,6 +23,6 @@ describe("GET /api/v2", () => {
       .get("/api/v2")
       .set("Accept", "application/json")
       .expect("Content-Type", /json/)
-      .expect(200, { message: "Coming soon 🚀" }, done);
+      .expect(200, { message: "API v2" }, done);
   });
 });

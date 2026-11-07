@@ -10,7 +10,8 @@ import v2Routes from "./api/v2";
 
 const app = express();
 app.use(morgan("dev"));
-app.use(helmet());
+// Map tiles are loaded as <img> from the front-end origin: allow cross-origin embedding.
+app.use(helmet({ crossOriginResourcePolicy: { policy: "cross-origin" } }));
 app.use(cors());
 app.use(express.json());
 // Render's chain is client -> Cloudflare (public IP) -> Render (private IPs). Trust exactly those hops, so req.ip is
@@ -46,7 +47,11 @@ app.get<{}, MessageResponse>("/", (req, res) => {
     message: "🦄🌈✨👋🌎🌍🌏✨🌈🦄",
   });
 });
-app.use("/api", middlewares.rateLimit);
+app.use("/api", (req, res, next) =>
+  (req.path.startsWith("/v2/tiles/")
+    ? middlewares.tileRateLimit
+    : middlewares.rateLimit)(req, res, next),
+);
 app.use("/api/v1", v1Routes);
 app.use("/api/v2", v2Routes);
 app.use(middlewares.notFound);
