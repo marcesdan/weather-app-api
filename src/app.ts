@@ -13,8 +13,10 @@ app.use(morgan("dev"));
 app.use(helmet());
 app.use(cors());
 app.use(express.json());
-// Render puts exactly one proxy in front; `true` would trust a client-sent X-Forwarded-For.
-app.set("trust proxy", 1);
+// Render has more than one proxy hop (1 made req.ip a private address and broke /ip-api).
+// shortcut: `true` trusts the left-most X-Forwarded-For, so a client can spoof its IP and dodge the rate limit;
+// set the exact hop count once measured on Render.
+app.set("trust proxy", true);
 app.get<{}, MessageResponse>("/", (req, res) => {
   res.json({
     message: "🦄🌈✨👋🌎🌍🌏✨🌈🦄",
