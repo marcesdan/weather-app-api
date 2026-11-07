@@ -91,7 +91,33 @@ export async function fetchTile(
   return { ok: true, body };
 }
 
+export type Nowcast = { data: { dt: number; precipitation: number }[] };
+const nowcastCache = ttlCache<Nowcast>(5 * 60_000, 500);
+
+// Next 60 minutes of precipitation, minute by minute (One Call API 4.0). Needs the "One Call API" subscription:
+// without it OpenWeatherMap answers 401 and the app simply hides the minute bar.
+export async function fetchNowcast(
+  lat: string,
+  lon: string,
+): Promise<FetchResult | { ok: true; data: Nowcast }> {
+  const key = `${Number(lat).toFixed(2)},${Number(lon).toFixed(2)}`;
+  const hit = nowcastCache.get(key);
+  if (hit) return { ok: true, data: hit };
+  const q = new URLSearchParams({ lat, lon, appid: apiKey });
+  const res = await safeFetch(`${baseUrl}/data/4.0/onecall/timeline/1min?${q}`);
+  if (!res.ok) return res;
+  const list =
+    (res.data as { data?: { dt: number; precipitation?: number }[] }).data ??
+    [];
+  const data: Nowcast = {
+    data: list.map((m) => ({ dt: m.dt, precipitation: m.precipitation ?? 0 })),
+  };
+  nowcastCache.set(key, data);
+  return { ok: true, data };
+}
+
 export const clearV2Caches = () => {
+  nowcastCache.clear();
   airCache.clear();
   tileCache.clear();
 };

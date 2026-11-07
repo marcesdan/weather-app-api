@@ -37,6 +37,32 @@ describe("GET /api/v2/air", () => {
   });
 });
 
+describe("GET /api/v2/nowcast", () => {
+  it("passes the minute timeline through, trimmed", async () => {
+    safeFetchMock.mockResolvedValue({
+      ok: true,
+      data: { data: [{ dt: 60, precipitation: 0.4, alerts: [] }] },
+    });
+    const res = await request(app).get("/api/v2/nowcast?lat=1&lon=2");
+    expect(res.statusCode).toBe(200);
+    expect(res.body).toEqual({ data: [{ dt: 60, precipitation: 0.4 }] });
+    expect(safeFetchMock.mock.calls[0][0]).toContain(
+      "/data/4.0/onecall/timeline/1min?",
+    );
+  });
+
+  it("forwards OpenWeatherMap's 401 when the account lacks the subscription", async () => {
+    safeFetchMock.mockResolvedValue({
+      ok: false,
+      status: 401,
+      problem: "Fetch failed: 401",
+    });
+    expect(
+      (await request(app).get("/api/v2/nowcast?lat=1&lon=2")).statusCode,
+    ).toBe(401);
+  });
+});
+
 describe("GET /api/v2/tiles", () => {
   it("rejects unknown layers and out-of-range tiles", async () => {
     for (const path of [

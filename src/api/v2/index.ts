@@ -3,6 +3,7 @@ import MessageResponse from "../../interfaces/MessageResponse";
 import { validCoords } from "../../utils/validCoords";
 import {
   fetchAir,
+  fetchNowcast,
   fetchTile,
   TILE_LAYERS,
 } from "../../services/weather-api-map-service/v2";
@@ -20,6 +21,17 @@ router.get("/air", async (req, res) => {
     return;
   }
   const result = await fetchAir(lat as string, lon as string);
+  if (result.ok) res.json(result.data);
+  else res.status(result.status).json({ problem: result.problem });
+});
+
+router.get("/nowcast", async (req, res) => {
+  const { lat, lon } = req.query;
+  if (!validCoords(lat, lon)) {
+    res.status(400).json({ error: "Geocords are required" });
+    return;
+  }
+  const result = await fetchNowcast(lat as string, lon as string);
   if (result.ok) res.json(result.data);
   else res.status(result.status).json({ problem: result.problem });
 });
