@@ -92,8 +92,11 @@ describe("client ip behind Render's proxies", () => {
       last = (
         await request(app)
           .get("/api/v1/")
-          .set("X-Forwarded-For", `${fake}, 198.51.100.7, 10.0.0.5`)
-      ).statusCode;
+          .set(
+            "X-Forwarded-For",
+            `${fake}, 198.51.100.7, 172.71.150.36, 10.0.0.5`,
+          )
+      ).statusCode; // client, real ip, Cloudflare, Render
     }
     expect(last).toBe(429);
   });
