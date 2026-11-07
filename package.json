@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": " A basic express.js API with Typescript for the weather app code challenge",
   "main": "dist/src/index.js",
+  "engines": {
+    "node": "26.x"
+  },
   "scripts": {
     "start": "NODE_ENV=production ts-node dist/src/index.js",
     "dev": "nodemon src/index.ts",
