@@ -63,6 +63,48 @@ describe("GET /api/v2/nowcast", () => {
   });
 });
 
+describe("GET /api/v2/nearby", () => {
+  it("returns towns biggest first and caches per ~10 km", async () => {
+    fetchMock.mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        elements: [
+          {
+            lat: 1,
+            lon: 1,
+            tags: { name: "Small", place: "town", population: "10" },
+          },
+          {
+            lat: 2,
+            lon: 2,
+            tags: {
+              name: "Big",
+              "name:es": "Grande",
+              place: "city",
+              population: "900",
+            },
+          },
+        ],
+      }),
+    });
+    const res = await request(app).get("/api/v2/nearby?lat=-38.01&lon=-57.55");
+    expect(res.statusCode).toBe(200);
+    expect(res.body.map((n: { name: string }) => n.name)).toEqual([
+      "Grande",
+      "Small",
+    ]);
+    await request(app).get("/api/v2/nearby?lat=-38.02&lon=-57.54");
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("answers Overpass failures with its status, not a crash", async () => {
+    fetchMock.mockResolvedValue({ ok: false, status: 429 });
+    expect(
+      (await request(app).get("/api/v2/nearby?lat=10&lon=10")).statusCode,
+    ).toBe(429);
+  });
+});
+
 describe("GET /api/v2/tiles", () => {
   it("rejects unknown layers and out-of-range tiles", async () => {
     for (const path of [

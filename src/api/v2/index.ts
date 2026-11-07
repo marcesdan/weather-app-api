@@ -3,6 +3,7 @@ import MessageResponse from "../../interfaces/MessageResponse";
 import { validCoords } from "../../utils/validCoords";
 import {
   fetchAir,
+  fetchNearby,
   fetchNowcast,
   fetchTile,
   TILE_LAYERS,
@@ -23,6 +24,19 @@ router.get("/air", async (req, res) => {
   const result = await fetchAir(lat as string, lon as string);
   if (result.ok) res.json(result.data);
   else res.status(result.status).json({ problem: result.problem });
+});
+
+router.get("/nearby", async (req, res) => {
+  const { lat, lon } = req.query;
+  if (!validCoords(lat, lon)) {
+    res.status(400).json({ error: "Geocords are required" });
+    return;
+  }
+  const result = await fetchNearby(Number(lat), Number(lon));
+  if (result.ok) {
+    res.set("Cache-Control", "public, max-age=86400");
+    res.json(result.data);
+  } else res.status(result.status).json({ problem: "Overpass unavailable" });
 });
 
 router.get("/nowcast", async (req, res) => {

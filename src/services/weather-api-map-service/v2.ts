@@ -116,7 +116,54 @@ export async function fetchNowcast(
   return { ok: true, data };
 }
 
+export type Nearby = {
+  name: string;
+  lat: number;
+  lon: number;
+  kind: string;
+  population: number;
+}[];
+const nearbyCache = ttlCache<Nearby>(24 * 60 * 60_000, 2000);
+
+// Towns and cities within 60 km from OpenStreetMap (Overpass). Proxied and cached for a day per ~10 km: Overpass
+// rate-limits by IP and answers its 429s without CORS headers, which the browser reports as a CORS failure.
+export async function fetchNearby(
+  lat: number,
+  lon: number,
+): Promise<{ ok: true; data: Nearby } | { ok: false; status: number }> {
+  const key = `${lat.toFixed(1)},${lon.toFixed(1)}`;
+  const hit = nearbyCache.get(key);
+  if (hit) return { ok: true, data: hit };
+  const q = `[out:json][timeout:15];node(around:60000,${lat.toFixed(
+    3,
+  )},${lon.toFixed(3)})[place~"^(city|town)$"][name];out 40;`;
+  const res = await fetch("https://overpass-api.de/api/interpreter", {
+    method: "POST",
+    body: new URLSearchParams({ data: q }),
+    headers: {
+      "User-Agent":
+        "weather-app-api (+https://github.com/marcesdan/weather-app-api)",
+    },
+  }).catch(() => null);
+  if (!res?.ok) return { ok: false, status: res?.status ?? 502 };
+  const { elements } = (await res.json()) as {
+    elements: { lat: number; lon: number; tags: Record<string, string> }[];
+  };
+  const data = elements
+    .map((e) => ({
+      name: e.tags["name:es"] ?? e.tags.name,
+      lat: e.lat,
+      lon: e.lon,
+      kind: e.tags.place,
+      population: Number(e.tags.population) || 0,
+    }))
+    .sort((a, b) => b.population - a.population);
+  nearbyCache.set(key, data);
+  return { ok: true, data };
+}
+
 export const clearV2Caches = () => {
+  nearbyCache.clear();
   nowcastCache.clear();
   airCache.clear();
   tileCache.clear();
