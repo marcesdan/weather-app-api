@@ -15,6 +15,15 @@ API REST consumida por la app de clima.
 - `GET /api/v1/geo/direct?city={city_name}`
 - `GET /api/v1/geo/reverse?lat={latitude}&lon={longitude}`
 
+v2 (keys stay on the server; in-memory caches per ~1–10 km cell):
+
+- `GET /api/v2/air?lat&lon` — air quality now + hourly forecast (OpenWeatherMap free plan), cached 30 min
+- `GET /api/v2/nowcast?lat&lon` — next 60 min of precipitation, minute by minute (One Call 4.0), cached 5 min; empty where OpenWeatherMap has no nowcast
+- `GET /api/v2/nearby?lat&lon` — towns and cities within 60 km (OpenStreetMap Overpass, mirror + 8 s timeout), cached 24 h
+- `GET /api/v2/tiles/{layer}/{z}/{x}/{y}.png` — Weather Maps 1.0 tiles (`clouds_new`, `precipitation_new`, `pressure_new`, `wind_new`, `temp_new`), cached 10 min
+
+Hardening: params escaped and coordinates validated (400), One Call cached 10 min per ~1 km cell, 120 req/min per client IP (tiles: their own budget), client IP = the address Cloudflare saw (Render's proxy chain is trusted exactly; a client-sent `X-Forwarded-For` is ignored). Node 26 LTS. Push to `master` deploys on Render.
+
 > Para poder ejecutar la api en forma local, es necesario generar una api key en Open Weather Map, y suscribirse al servicio One Call 3.0. Luego poner esa api key en la variable de entorno `OPEN_WEATHER_MAP_API_KEY`.
 > Puede seguir las instrucciones [aqui](https://openweathermap.org/api/one-call-3)
 
